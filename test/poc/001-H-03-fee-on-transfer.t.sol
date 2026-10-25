@@ -33,10 +33,8 @@ contract H03FeeOnTransfer is Test {
         token = new FeeOnTransferToken();
 
         ThunderLoanUpgraded impl = new ThunderLoanUpgraded();
-        ERC1967Proxy proxy = new ERC1967Proxy(
-            address(impl),
-            abi.encodeWithSignature("initialize(address)", address(factory))
-        );
+        ERC1967Proxy proxy =
+            new ERC1967Proxy(address(impl), abi.encodeWithSignature("initialize(address)", address(factory)));
         tl = ThunderLoanUpgraded(address(proxy));
 
         factory.createPool(address(token));
@@ -56,8 +54,7 @@ contract H03FeeOnTransfer is Test {
         // against tokens that never arrived.
         uint256 poolBalance = token.balanceOf(address(assetToken));
         uint256 lpShares = assetToken.balanceOf(lp);
-        uint256 lpClaim = (lpShares * assetToken.getExchangeRate())
-            / assetToken.EXCHANGE_RATE_PRECISION();
+        uint256 lpClaim = (lpShares * assetToken.getExchangeRate()) / assetToken.EXCHANGE_RATE_PRECISION();
 
         assertEq(poolBalance, 9_900 ether, "pool received 1% less than credited");
         assertEq(lpShares, 10_000 ether, "LP credited for full requested amount");

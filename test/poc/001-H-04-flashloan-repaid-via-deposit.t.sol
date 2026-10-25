@@ -26,13 +26,10 @@ contract DepositRepayAttacker is IFlashLoanReceiver {
         token = IERC20(_token);
     }
 
-    function executeOperation(
-        address tokenAddr,
-        uint256 amount,
-        uint256 fee,
-        address,
-        bytes calldata
-    ) external returns (bool) {
+    function executeOperation(address tokenAddr, uint256 amount, uint256 fee, address, bytes calldata)
+        external
+        returns (bool)
+    {
         require(msg.sender == tl, "not thunderLoan");
         require(tokenAddr == address(token), "wrong token");
 
@@ -64,10 +61,8 @@ contract H04FlashLoanRepaidViaDeposit is Test {
         token = new MockToken();
 
         ThunderLoan impl = new ThunderLoan();
-        ERC1967Proxy proxy = new ERC1967Proxy(
-            address(impl),
-            abi.encodeWithSignature("initialize(address)", address(factory))
-        );
+        ERC1967Proxy proxy =
+            new ERC1967Proxy(address(impl), abi.encodeWithSignature("initialize(address)", address(factory)));
         tl = ThunderLoan(address(proxy));
 
         factory.createPool(address(token));
@@ -101,8 +96,8 @@ contract H04FlashLoanRepaidViaDeposit is Test {
         // ── Assertions ────────────────────────────────────────────────────
         uint256 poolAfter = token.balanceOf(address(assetToken));
         uint256 attackerProceeds = token.balanceOf(address(this));
-        uint256 lpClaim = (assetToken.balanceOf(lp) * assetToken.getExchangeRate())
-            / assetToken.EXCHANGE_RATE_PRECISION();
+        uint256 lpClaim =
+            (assetToken.balanceOf(lp) * assetToken.getExchangeRate()) / assetToken.EXCHANGE_RATE_PRECISION();
 
         // The attacker walked with ~the loan amount (minus rounding)
         assertGt(attackerProceeds, amount - 1 ether, "attacker captured the loan");

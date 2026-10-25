@@ -29,10 +29,8 @@ contract M02OracleManipulation is Test {
         factory.setPool(address(token), address(pool));
 
         ThunderLoan impl = new ThunderLoan();
-        ERC1967Proxy proxy = new ERC1967Proxy(
-            address(impl),
-            abi.encodeWithSignature("initialize(address)", address(factory))
-        );
+        ERC1967Proxy proxy =
+            new ERC1967Proxy(address(impl), abi.encodeWithSignature("initialize(address)", address(factory)));
         tl = ThunderLoan(address(proxy));
         assetToken = tl.setAllowedToken(token, true);
     }

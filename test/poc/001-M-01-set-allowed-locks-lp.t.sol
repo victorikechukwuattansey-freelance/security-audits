@@ -26,10 +26,8 @@ contract M01SetAllowedLocksLP is Test {
         token = new MockToken();
 
         ThunderLoan impl = new ThunderLoan();
-        ERC1967Proxy proxy = new ERC1967Proxy(
-            address(impl),
-            abi.encodeWithSignature("initialize(address)", address(factory))
-        );
+        ERC1967Proxy proxy =
+            new ERC1967Proxy(address(impl), abi.encodeWithSignature("initialize(address)", address(factory)));
         tl = ThunderLoan(address(proxy));
 
         factory.createPool(address(token));
@@ -54,7 +52,7 @@ contract M01SetAllowedLocksLP is Test {
 
         // ── LP cannot redeem ──────────────────────────────────────────────
         vm.prank(lp);
-        vm.expectRevert();  // ThunderLoan__NotAllowedToken
+        vm.expectRevert(); // ThunderLoan__NotAllowedToken
         tl.redeem(token, shares);
 
         // Verify the underlying tokens are still in the AssetToken contract —
