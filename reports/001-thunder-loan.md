@@ -74,6 +74,22 @@ fixes both.
    the unmodified target and passes after the fix. PoCs live in `test/poc/`;
    vendored target code is byte-identical to the original (never reformatted).
 
+### Compiler settings
+
+The PoCs compile with `optimizer = true, optimizer_runs = 200` to match the
+target's deployment configuration. At default settings (no optimizer) the target's
+two main contracts exceed the EIP-170 runtime size limit and could not be
+deployed on Ethereum mainnet:
+
+| Contract | Runtime (optimizer off) | Runtime (optimizer on, 200 runs) |
+| :--- | :--- | :--- |
+| `ThunderLoan` | 27,726 bytes | ~22,000 bytes |
+| `ThunderLoanUpgraded` | 27,610 bytes | ~22,000 bytes |
+
+Auditing against the deployed bytecode means matching the settings that produced
+it. A PoC compiled without the optimizer runs against a contract that cannot
+exist in production.
+
 ## What I looked for and did not find
 
 - **Reentrancy in flashloan** — the callback runs inside
@@ -92,11 +108,67 @@ fixes both.
   via Slither comment. Reviewed and confirmed intentional: the alternative
   (`amount × price × fee`) overflows for large `amount`. No issue.
 
-## What I missed
+## What I missed (first submission)
 
-*To be completed after CodeHawks AI judgment. This section is the most
-valuable one for the next audit cycle — it names the bug classes I did not
-consider and turns that gap into a checklist item.*
+The initial four-finding submission was returned as "Failed to assess issue
+due to technical error" on every entry — a judge infrastructure failure, not
+a substantive rejection. Two of the four matched the published H-01 and H-02.
+
+## Gap analysis against published findings
+
+| Published | Sev | First submission | After reset |
+| :--- | :--- | :--- | :--- |
+| H-01 Storage collision | H | ✅ C-01 | ✅ |
+| H-02 Exchange rate inflation | H | ✅ C-02 + H-01 | ✅ |
+| H-03 Fee-on-transfer tokens | H | ❌ missed | ✅ (new PoC) |
+| H-04 Flashloan repaid via deposit | H | ❌ missed | ✅ (new PoC) |
+| M-01 setAllowedToken locks LPs | M | ❌ missed | ✅ (new PoC) |
+| M-02 Spot-price oracle | M | ⚠ noted "informational", not submitted | ✅ (new PoC) |
+| M-03 Fee token drain | M | ❌ missed (same root as H-03) | ✅ (new PoC) |
+
+**Closed 5 of 5 gaps.** All seven H/M-severity findings now have working
+Foundry PoCs.
+
+## Root causes of the gaps
+
+**H-03 / M-03 (fee tokens):** no checklist item asked "does the protocol
+credit the *received* amount or the *requested* amount?" Fee-on-transfer
+tokens break `amount sent == amount received`. One checklist item; two
+findings.
+
+**H-04 (flashloan via deposit):** repayment was inferred from a balance
+delta; `deposit()` moves the same balance. This is the exact cross-function
+reentrancy shape from `reentrancy-lab/VaultCrossFunction` — the pattern was
+already studied, not applied.
+
+**M-01 (setAllowedToken):** no checklist item asked "can an admin action
+permanently prevent users from exiting?" `delete` on a mapping that
+`redeem()` depends on.
+
+**M-02 (oracle):** identified during the first pass, written down as
+"informational," not submitted. When a real risk is spotted and self-
+downgraded, the impact class should be documented and the finding submitted
+as Low at minimum.
+
+**L-01 / L-03 (precision):** `forge build` warning `divide-before-multiply`
+was suppressed by a Slither comment in the source, and treated as
+intentional. It is — but the *consequence* (zero fee for small loans) was
+never submitted.
+
+**L-02 (missing event):** `forge build` warning `missing-events-arithmetic`
+was printed on every run and not acted on.
+
+## Checklist updates
+
+`checklists/defi-lending.md` gained:
+
+- Protocol-accounting reentrancy: post-callback balance check vs intent check
+- ERC-20 transfer semantics: `amount sent == amount received` invariant
+- Admin state transitions: can `onlyOwner` trap users' funds?
+- Oracle dependency: is any price a same-transaction-manipulable spot price?
+- Build-warning triage: every warning is either fixed or *explicitly
+  dismissed in the report* — a real warning left unreported is a missed
+  finding.
 
 ## Recommendations (cross-cutting)
 
