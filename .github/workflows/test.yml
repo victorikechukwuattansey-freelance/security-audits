@@ -33,3 +33,32 @@ jobs:
 
       - name: Run Forge tests
         run: forge test -vvv
+
+name: test
+on: [push, pull_request]
+
+jobs:
+  foundry:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: foundry-rs/foundry-toolchain@v1
+      - run: forge fmt --check
+      - run: forge test --match-path 'test/poc/*.t.sol' -vv
+
+  fresh-clone:
+    # The only test that proves the repo is self-contained.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone as a reviewer would
+        run: |
+          git clone https://github.com/${{ github.repository }}.git cloned
+          cd cloned
+          test -f .gitmodules && { echo "FAIL: .gitmodules exists"; exit 1; } || true
+          test -f lib/forge-std/src/Test.sol
+          test -f lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol
+      - uses: foundry-rs/foundry-toolchain@v1
+      - name: Run PoCs on fresh checkout
+        run: |
+          cd cloned
+          forge test --match-path 'test/poc/*.t.sol' -vv
