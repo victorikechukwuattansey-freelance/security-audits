@@ -1,49 +1,33 @@
-# Security Audits
+# Security Audits & Research
 
-Public security review reports on open-source code. Each report follows the
-same format: scope, methodology, findings with Foundry PoCs, remediation,
-retest, and documented residual risk.
+Public security reviews, audit portfolios, and competitive challenge solutions on open-source code. Each report follows a strict format: scope, methodology, findings with Foundry PoCs, remediation, and documented residual risk.
 
-## Reports
+## Security Reports
 
-| # | Target | Scope | Findings | Report |
+| # | Target | Platform / Scope | Findings | Report |
 | :--- | :--- | :--- | :--- | :--- |
-| 001 | [Thunder Loan](https://github.com/Cyfrin/2023-11-Thunder-Loan) | CodeHawks AI First Flight #7 | 2C / 1H / 1L | [report](./reports/001-thunder-loan.md) |
+| 001 | [Thunder Loan](https://github.com/Cyfrin/2023-11-Thunder-Loan) | CodeHawks AI First Flight #7 | 2C / 1H / 1L | [Report](./reports/001-thunder-loan.md) |
+| 002 | [Twyne Contracts](https://immunefi.com/bounty/twyne/) | Immunefi (Live Program) | 0 (7 leads closed) | [Report](./reports/twyne/2026-10-negative-result.md) |
 
-## Method
+## Audit Challenges & Portfolios
 
-Every report follows the same workflow:
+| Challenge | Focus Area | Deliverable |
+| :--- | :--- | :--- |
+| **[Pessimistic Junior](./pessimistic-junior/README.md)** | Reentrancy, Signature Malleability, Access Control, Slither | 11 completed smart contract security tasks |
+| **OtterSec Challenge** | EVM Bytecode Decompilation & Storage Analysis | [Foundry PoC](./pocs/ottersec-challenge/test/OtterSec.t.sol) |
 
-1. **Clone the target and build it.** Run the project's own tests; note coverage
-   gaps.
+## Methodology
 
-2. **Read the diff between vulnerable and upgraded contracts** (if any). The
-   diff reveals what the patch author thought was wrong — and, sometimes, what
-   they introduced.
+Every audit and challenge follows a strict, repeatable workflow:
 
-3. **Run the invariant checklist for the target class** (`checklists/`).
-
-4. **Write one PoC per finding** in `test/poc/`, against byte-identical
-   vendored target code. Never reformat vendored files (enforced via
-   `[fmt] ignore`).
-
-5. **Submit to the platform, incorporate the judgment, publish the report.**
-   The "What I missed" section is the feedback loop made public.
-
-## Findings index
-
-- [C-01](./findings/C-01-storage-collision.md) — Storage collision on upgrade
-- [C-02](./findings/C-02-deposit-breaks-redeem.md) — Deposit inflates rate, blocks redeem
-- [H-01](./findings/H-01-deposit-insolvency.md) — Latent insolvency behind C-02
-- [L-01](./findings/L-01-getFeePrecision-removed.md) — Getter removed in upgrade
+1. **Environment & Baseline:** Clone the target, configure the toolchain (Foundry, archive forks), and reproduce the existing test suite to establish a baseline.
+2. **Source Review & Threat Modeling:** Read the codebase in full. Map out invariants and state transitions before looking for bugs.
+3. **First-Pass Checklist:** Run the `[Seven-Lead Checklist](./strategies/seven-lead-checklist.md)` to quickly eliminate linter false positives and common vulnerability patterns.
+4. **Write PoCs:** Do not submit a finding without a working Foundry PoC that fails in the exact predicted way.
+5. **Honest Reporting:** If a lead is negative, document the evidence and move on. Never submit speculative findings.
 
 ## Why this repo exists
 
-The companion repos (`my-erc-20-token`, `my-nft`, `nft-staking`,
-`reentrancy-lab`) show I can build and break code I wrote. This repo shows I
-can find issues in code I did not write — under a scope constraint, with a
-severity judgment a protocol team would accept, backed by reproducible PoCs.
+The companion repos (`my-erc-20-token`, `my-nft`, `nft-staking`, `reentrancy-lab`) show I can build code. This repo shows I can break it, audit it, and document it under real-world constraints. 
 
-## License
-
-MIT
+It includes both **positive findings** (Thunder Loan) and a **negative audit result** (Twyne), demonstrating the discipline to know when a codebase is secure and the rigor to prove it.
